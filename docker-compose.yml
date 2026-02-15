@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Language Detection Service
+  language-detection:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: language-detection-service
+    ports:
+      - '3001:3001'
+      - '9090:9090' # Metrics
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - ENABLE_SERVICE_DISCOVERY=false
+      - LOG_LEVEL=debug
+    volumes:
+      - ./src:/app/src # Hot reload in development
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - securestack-network
+
+  # RabbitMQ Message Queue
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    ports:
+      - '5672:5672' # AMQP
+      - '15672:15672' # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - securestack-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis (for caching - optional)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - securestack-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  rabbitmq-data:
+  redis-data:
+
+networks:
+  securestack-network:
+    driver: bridge
