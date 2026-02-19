@@ -40,7 +40,7 @@ export class LanguageDetectionController {
         throw new AppError(400, error.details[0].message, 'VALIDATION_ERROR');
       }
 
-      const request: DetectionRequest = value;
+      const request = value as DetectionRequest;
 
       logger.info('Starting language detection', {
         projectPath: request.projectPath,
@@ -75,11 +75,11 @@ export class LanguageDetectionController {
    * GET /api/v1/languages
    * Get list of supported languages
    */
-  async getSupportedLanguages(
+  getSupportedLanguages(
     _req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): void {
     try {
       const patterns = this.languageDetector['patterns'];
       const languages = patterns.getAllLanguages();
@@ -123,7 +123,7 @@ export class LanguageDetectionController {
         throw new AppError(400, error.details[0].message, 'VALIDATION_ERROR');
       }
 
-      const { projects } = value;
+      const { projects } = value as { projects: DetectionRequest[] };
 
       logger.info('Starting batch language detection', {
         projectCount: projects.length,
@@ -137,13 +137,19 @@ export class LanguageDetectionController {
       );
 
       const successResults = results
-        .filter((r) => r.status === 'fulfilled')
-        .map((r: any) => r.value);
+        .filter(
+          (
+            r
+          ): r is PromiseFulfilledResult<
+            Awaited<ReturnType<typeof this.languageDetector.detect>>
+          > => r.status === 'fulfilled'
+        )
+        .map((r) => r.value);
 
       const failedResults = results
-        .filter((r) => r.status === 'rejected')
-        .map((r: any) => ({
-          error: r.reason.message,
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map((r) => ({
+          error: r.reason?.message || 'Unknown error',
         }));
 
       res.json({

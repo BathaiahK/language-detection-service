@@ -19,7 +19,12 @@ export class LanguagePatterns {
       {
         language: 'javascript',
         extensions: ['.js', '.jsx', '.mjs', '.cjs'],
-        packageFiles: ['package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'],
+        packageFiles: [
+          'package.json',
+          'package-lock.json',
+          'yarn.lock',
+          'pnpm-lock.yaml',
+        ],
         buildFiles: ['webpack.config.js', 'rollup.config.js', 'vite.config.js'],
         configFiles: ['.eslintrc.js', '.prettierrc.js', 'tsconfig.json'],
         frameworkIndicators: [
@@ -89,7 +94,13 @@ export class LanguagePatterns {
       {
         language: 'python',
         extensions: ['.py', '.pyw', '.pyx'],
-        packageFiles: ['requirements.txt', 'Pipfile', 'setup.py', 'pyproject.toml', 'poetry.lock'],
+        packageFiles: [
+          'requirements.txt',
+          'Pipfile',
+          'setup.py',
+          'pyproject.toml',
+          'poetry.lock',
+        ],
         buildFiles: ['setup.py', 'pyproject.toml'],
         configFiles: ['setup.cfg', 'pytest.ini', 'mypy.ini'],
         frameworkIndicators: [
@@ -121,7 +132,12 @@ export class LanguagePatterns {
       {
         language: 'java',
         extensions: ['.java'],
-        packageFiles: ['pom.xml', 'build.gradle', 'build.gradle.kts', 'settings.gradle'],
+        packageFiles: [
+          'pom.xml',
+          'build.gradle',
+          'build.gradle.kts',
+          'settings.gradle',
+        ],
         buildFiles: ['pom.xml', 'build.gradle', 'build.gradle.kts'],
         configFiles: ['application.properties', 'application.yml'],
         frameworkIndicators: [

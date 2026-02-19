@@ -43,7 +43,11 @@ export class FrameworkDetector {
 
       return null;
     } catch (error) {
-      logger.warn('Failed to detect framework', { projectPath, language, error });
+      logger.warn('Failed to detect framework', {
+        projectPath,
+        language,
+        error,
+      });
       return null;
     }
   }

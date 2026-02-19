@@ -1,4 +1,4 @@
-import { LanguageDetector } from '../services/languageDetector.service';
+import { LanguageDetector } from '../languageDetector.service';
 
 describe('LanguageDetector', () => {
   let detector: LanguageDetector;

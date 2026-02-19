@@ -2,13 +2,48 @@ import amqp from 'amqplib';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
+interface AmqpConnection {
+  createChannel(): Promise<AmqpChannel>;
+  close(): Promise<void>;
+}
+
+interface AmqpChannel {
+  assertExchange(
+    exchange: string,
+    type: string,
+    options: { durable: boolean }
+  ): Promise<void>;
+  assertQueue(queue: string, options: { durable: boolean }): Promise<void>;
+  bindQueue(queue: string, exchange: string, routingKey: string): Promise<void>;
+  consume(
+    queue: string,
+    onMessage: (msg: AmqpMessage | null) => void,
+    options: { noAck: boolean }
+  ): Promise<void>;
+  ack(msg: AmqpMessage): void;
+  nack(msg: AmqpMessage, allUpTo: boolean, requeue: boolean): void;
+  publish(
+    exchange: string,
+    routingKey: string,
+    content: Buffer,
+    options: { persistent: boolean }
+  ): void;
+  close(): Promise<void>;
+}
+
+interface AmqpMessage {
+  content: Buffer;
+}
+
 export class MessageQueueService {
-  private connection: any = null;
-  private channel: any = null;
+  private connection: AmqpConnection | null = null;
+  private channel: AmqpChannel | null = null;
 
   async connect(): Promise<void> {
     try {
-      this.connection = await amqp.connect(config.rabbitmq.url);
+      this.connection = (await amqp.connect(
+        config.rabbitmq.url
+      )) as unknown as AmqpConnection;
       this.channel = await this.connection.createChannel();
 
       if (!this.channel) {
@@ -46,11 +81,11 @@ export class MessageQueueService {
 
     await this.channel.consume(
       config.rabbitmq.queue,
-      async (msg: any) => {
+      async (msg: AmqpMessage | null) => {
         if (!msg) return;
 
         try {
-          const content = JSON.parse(msg.content.toString());
+          const content = JSON.parse(msg.content.toString()) as unknown;
           logger.info('Received message', { content });
 
           // Process the message (implement your business logic)
@@ -70,12 +105,12 @@ export class MessageQueueService {
     logger.info('Message consumers set up');
   }
 
-  async publish(routingKey: string, message: any): Promise<void> {
+  async publish(routingKey: string, message: unknown): Promise<void> {
     if (!this.channel) {
       throw new Error('Channel not initialized');
     }
 
-    await this.channel.publish(
+    this.channel.publish(
       config.rabbitmq.exchange,
       routingKey,
       Buffer.from(JSON.stringify(message)),
@@ -85,7 +120,7 @@ export class MessageQueueService {
     logger.debug('Message published', { routingKey });
   }
 
-  private async processMessage(content: any): Promise<void> {
+  private async processMessage(content: unknown): Promise<void> {
     // Implement message processing logic
     // This is where you'd handle incoming detection requests from other services
     logger.info('Processing message', { content });

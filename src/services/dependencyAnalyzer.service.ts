@@ -72,7 +72,9 @@ export class DependencyAnalyzer {
 
     try {
       const content = await fs.readFile(requirementsPath, 'utf-8');
-      const deps = content.split('\n').filter((line) => line.trim() && !line.startsWith('#'));
+      const deps = content
+        .split('\n')
+        .filter((line) => line.trim() && !line.startsWith('#'));
 
       return {
         language: 'python',

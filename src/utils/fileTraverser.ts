@@ -74,7 +74,9 @@ export class FileTraverser {
    */
   async *traverse(rootPath: string): AsyncGenerator<string> {
     if (!this.initialized) {
-      throw new Error('FileTraverser not initialized. Call initialize() first.');
+      throw new Error(
+        'FileTraverser not initialized. Call initialize() first.'
+      );
     }
 
     yield* this.traverseDirectory(rootPath, rootPath);
@@ -118,6 +120,7 @@ export class FileTraverser {
   async countFiles(rootPath: string): Promise<number> {
     let count = 0;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _ of this.traverse(rootPath)) {
       count++;
     }
@@ -146,7 +149,9 @@ export class FileTraverser {
     extensions: string[]
   ): AsyncGenerator<string> {
     const lowerExtensions = extensions.map((ext) =>
-      ext.toLowerCase().startsWith('.') ? ext.toLowerCase() : `.${ext.toLowerCase()}`
+      ext.toLowerCase().startsWith('.')
+        ? ext.toLowerCase()
+        : `.${ext.toLowerCase()}`
     );
 
     for await (const file of this.traverse(rootPath)) {

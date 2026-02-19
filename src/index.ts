@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { Server } from 'http';
 import app from './app';
 import { logger } from './utils/logger';
 import { config } from './config';
@@ -8,7 +9,7 @@ import { ServiceRegistry } from './services/serviceRegistry.service';
 const PORT = config.port;
 const HOST = config.host;
 
-let server: any;
+let server: Server | undefined;
 let messageQueueService: MessageQueueService;
 let serviceRegistry: ServiceRegistry;
 

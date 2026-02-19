@@ -326,7 +326,7 @@ export class LanguageDetector {
 
       if (depInfo) {
         // Store additional dependency info in a metadata field
-        (langInfo as any).dependencyInfo = depInfo;
+        Object.assign(langInfo, { dependencyInfo: depInfo });
       }
     }
   }
