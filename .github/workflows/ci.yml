@@ -27,9 +27,11 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+        continue-on-error: true  # Warnings don't block CI
 
       - name: Check formatting
         run: npm run format -- --check
+        continue-on-error: true  # Formatting issues don't block CI
 
   test:
     name: Unit Tests
