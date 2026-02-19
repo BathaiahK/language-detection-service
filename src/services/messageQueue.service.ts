@@ -1,15 +1,19 @@
-import amqp, { Connection, Channel } from 'amqplib';
+import amqp from 'amqplib';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
 export class MessageQueueService {
-  private connection: Connection | null = null;
-  private channel: Channel | null = null;
+  private connection: any = null;
+  private channel: any = null;
 
   async connect(): Promise<void> {
     try {
       this.connection = await amqp.connect(config.rabbitmq.url);
       this.channel = await this.connection.createChannel();
+
+      if (!this.channel) {
+        throw new Error('Failed to create channel');
+      }
 
       await this.channel.assertExchange(config.rabbitmq.exchange, 'topic', {
         durable: true,
@@ -42,7 +46,7 @@ export class MessageQueueService {
 
     await this.channel.consume(
       config.rabbitmq.queue,
-      async (msg) => {
+      async (msg: any) => {
         if (!msg) return;
 
         try {

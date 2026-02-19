@@ -1,0 +1,28 @@
+# Render.com deployment configuration (Alternative to Railway)
+# Free tier: 750 hours/month
+
+services:
+  - type: web
+    name: language-detection-service
+    env: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false # Add manually in Render dashboard
+      - key: REDIS_URL
+        sync: false # Add manually in Render dashboard
+      - key: RABBITMQ_URL
+        sync: false # Add manually in Render dashboard
+      - key: RABBITMQ_ENABLED
+        value: true
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_METRICS
+        value: true

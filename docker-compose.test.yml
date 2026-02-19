@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Language Detection Service (Test)
+  language-detection-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: language-detection-test
+    ports:
+      - '3101:3001' # Test port to avoid conflicts
+      - '9091:9090' # Metrics
+    environment:
+      - NODE_ENV=test
+      - PORT=3001
+      - RABBITMQ_URL=amqp://rabbitmq-test:5672
+      - RABBITMQ_ENABLED=true
+      - ENABLE_SERVICE_DISCOVERY=false
+      - LOG_LEVEL=info
+      - RATE_LIMIT_MAX_REQUESTS=1000 # Higher limit for testing
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+    volumes:
+      - ./dist:/app/dist # Use built code for consistent tests
+    depends_on:
+      rabbitmq-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - securestack-test-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # RabbitMQ Message Queue (Test)
+  rabbitmq-test:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq-test
+    ports:
+      - '5673:5672' # AMQP test port
+      - '15673:15672' # Management UI test port
+    environment:
+      - RABBITMQ_DEFAULT_USER=test
+      - RABBITMQ_DEFAULT_PASS=test123
+    networks:
+      - securestack-test-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Redis (Test)
+  redis-test:
+    image: redis:7-alpine
+    container_name: redis-test
+    ports:
+      - '6380:6379' # Test port
+    networks:
+      - securestack-test-network
+    command: redis-server --appendonly no --save "" # No persistence for tests
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  securestack-test-network:
+    driver: bridge
+    name: securestack-test-network

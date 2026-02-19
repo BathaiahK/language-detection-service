@@ -22,7 +22,6 @@ export class LanguageDetectionController {
    */
   async detect(req: Request, res: Response, next: NextFunction): Promise<void> {
     const start = Date.now();
-    let success = false;
 
     try {
       // Validate request body
@@ -49,8 +48,6 @@ export class LanguageDetectionController {
 
       // Perform detection
       const result = await this.languageDetector.detect(request);
-
-      success = true;
 
       // Record metrics
       const duration = (Date.now() - start) / 1000;
@@ -79,7 +76,7 @@ export class LanguageDetectionController {
    * Get list of supported languages
    */
   async getSupportedLanguages(
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {

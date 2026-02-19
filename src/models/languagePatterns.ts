@@ -1,4 +1,4 @@
-import { LanguagePattern, FrameworkIndicator } from '../types';
+import { LanguagePattern } from '../types';
 
 export class LanguagePatterns {
   private patterns: Map<string, LanguagePattern>;

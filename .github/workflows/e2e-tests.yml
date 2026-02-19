@@ -1,0 +1,129 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build service
+        run: npm run build
+
+      - name: Start test environment
+        run: docker-compose -f docker-compose.test.yml up -d
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for services to be healthy..."
+          timeout 120 bash -c 'until curl -f http://localhost:3101/health; do sleep 2; done'
+          echo "✓ Language Detection Service is healthy"
+
+      - name: Verify test environment
+        run: |
+          echo "Checking service status..."
+          docker-compose -f docker-compose.test.yml ps
+          echo ""
+          echo "Checking service health..."
+          curl -f http://localhost:3101/health || exit 1
+          echo ""
+          echo "✓ Test environment verified"
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Generate coverage report
+        if: always()
+        run: npm run test:e2e:coverage
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            coverage-e2e/
+            test-results/
+          retention-days: 30
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage-e2e/lcov.info
+          flags: e2e
+          name: e2e-coverage
+        continue-on-error: true
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testResults = '✅ E2E tests completed';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## E2E Test Results\n\n${testResults}\n\nView full results in the [Actions tab](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+        continue-on-error: true
+
+      - name: View service logs on failure
+        if: failure()
+        run: |
+          echo "=== Language Detection Service Logs ==="
+          docker-compose -f docker-compose.test.yml logs language-detection-test
+          echo ""
+          echo "=== RabbitMQ Logs ==="
+          docker-compose -f docker-compose.test.yml logs rabbitmq-test
+          echo ""
+          echo "=== Redis Logs ==="
+          docker-compose -f docker-compose.test.yml logs redis-test
+
+      - name: Cleanup test environment
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down -v
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.e2e-tests.result }}" = "success" ]; then
+            echo "✅ All E2E tests passed!"
+            exit 0
+          else
+            echo "❌ E2E tests failed"
+            exit 1
+          fi

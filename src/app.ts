@@ -42,7 +42,7 @@ if (config.monitoring.enabled) {
 app.use(rateLimiter);
 
 // Health check endpoint (no auth required)
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'healthy',
     service: config.serviceName,
@@ -53,7 +53,7 @@ app.get('/health', (req, res) => {
 });
 
 // Readiness check
-app.get('/ready', (req, res) => {
+app.get('/ready', (_req, res) => {
   // Check dependencies (database, message queue, etc.)
   const isReady = true; // Add actual checks here
 

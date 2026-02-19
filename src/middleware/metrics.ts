@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import client from 'prom-client';
-import { config } from '../config';
 
 // Create a Registry
 export const register = new client.Registry();
@@ -71,7 +70,7 @@ export const metricsMiddleware = (
 
 // Expose metrics endpoint
 export const metricsHandler = async (
-  req: Request,
+  _req: Request,
   res: Response
 ): Promise<void> => {
   res.set('Content-Type', register.contentType);
